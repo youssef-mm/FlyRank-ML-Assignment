@@ -1,0 +1,26 @@
+{
+  "total_inventory_analyzed": 30000,
+  "prioritized_refresh_candidates": 16742,
+  "action_distribution": {
+    "monitor": 13258,
+    "refresh_and_review_ctr": 6276,
+    "refresh": 5720,
+    "refresh_and_review_engagement": 4687,
+    "expand_and_refresh": 59
+  },
+  "confidence_distribution": {
+    "low": 13258,
+    "medium": 10600,
+    "high": 6142
+  },
+  "monitoring_specifications": {
+    "refresh_cadence_days": 30,
+    "min_acceptable_precision_at_20": 0.65,
+    "retrain_trigger_core_update": true,
+    "max_missing_tracking_rate": 0.15,
+    "active_models": {
+      "primary_scoring_model": "RandomForestClassifier(depth=8, min_samples_leaf=20)",
+      "benchmark_baseline": "stale_visible_rule_baseline"
+    }
+  }
+}
