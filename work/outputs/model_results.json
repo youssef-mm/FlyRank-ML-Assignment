@@ -1,6 +1,6 @@
 {
   "test_base_rate": 0.3909677419354839,
-  "models_comparison": [
+  "comparison": [
     {
       "Model": "Week 4 Baseline Rule",
       "ROC-AUC": 0.5017,
@@ -12,12 +12,12 @@
     },
     {
       "Model": "Logistic Regression",
-      "ROC-AUC": 0.7128,
-      "PR-AUC": 0.5315,
+      "ROC-AUC": 0.7144,
+      "PR-AUC": 0.5324,
       "P@10": 0.3,
       "P@20": 0.35,
       "P@50": 0.4,
-      "P@100": 0.44
+      "P@100": 0.45
     },
     {
       "Model": "Decision Tree (depth=3)",
@@ -30,12 +30,12 @@
     },
     {
       "Model": "Random Forest (depth=8)",
-      "ROC-AUC": 0.7541,
-      "PR-AUC": 0.6343,
+      "ROC-AUC": 0.7528,
+      "PR-AUC": 0.6335,
       "P@10": 0.8,
       "P@20": 0.85,
       "P@50": 0.82,
-      "P@100": 0.78
+      "P@100": 0.79
     }
   ]
 }

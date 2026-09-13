@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Predicting Organic Search Traffic Decay: Decision-Support Machine Learning on 79M Query Impressions</title>
+  <meta name="description" content="Research paper on predicting organic search traffic decay and operationalizing content refreshes using supervised machine learning on 79M query impressions.">
+  <meta name="author" content="Youssef Mohamed">
+  <link rel="canonical" href="https://youssef-mm.github.io/FlyRank-ML-Assignment/">
+
+  <!-- Open Graph & Twitter Cards -->
+  <meta property="og:title" content="Predicting Organic Search Traffic Decay: Decision-Support ML on 79M Impressions">
+  <meta property="og:description" content="Machine learning research paper on predicting SEO content decay and optimizing editorial resource allocation across 30,000 landing pages.">
+  <meta property="og:type" content="article">
+  <meta property="og:url" content="https://youssef-mm.github.io/FlyRank-ML-Assignment/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --primary-light: #3b82f6;
+      --primary-dark: #0f172a;
+      --accent: #2563eb;
+      --bg: #ffffff;
+      --surface: #f8fafc;
+      --surface-border: #e2e8f0;
+      --text-main: #1e293b;
+      --text-muted: #64748b;
+      --success-bg: #ecfdf5;
+      --success-border: #10b981;
+      --success-text: #065f46;
+      --warning-bg: #fffbeb;
+      --warning-border: #f59e0b;
+      --warning-text: #92400e;
+      --danger-bg: #fef2f2;
+      --danger-border: #ef4444;
+      --danger-text: #991b1b;
+      --code-bg: #0f172a;
+      --code-text: #e2e8f0;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      line-height: 1.68;
+      color: var(--text-main);
+      background-color: var(--bg);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Header & Navigation */
+    header {
+      border-bottom: 1px solid var(--surface-border);
+      background: #ffffff;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      backdrop-filter: blur(8px);
+      background-color: rgba(255, 255, 255, 0.95);
+    }
+
+    .nav-container {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0.85rem 1.5rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+      color: var(--primary-dark);
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.25rem;
+      list-style: none;
+      font-size: 0.9rem;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.15s ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--primary);
+    }
+
+    .btn-github {
+      background-color: var(--primary-dark);
+      color: #ffffff !important;
+      padding: 0.4rem 0.85rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* Layout */
+    .page-wrapper {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 3rem 1.5rem 6rem 1.5rem;
+    }
+
+    /* Paper Hero */
+    .paper-hero {
+      margin-bottom: 2.5rem;
+      padding-bottom: 2rem;
+      border-bottom: 2px solid var(--surface-border);
+    }
+
+    .paper-badge-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.2rem;
+    }
+
+    .badge {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 0.25rem 0.65rem;
+      border-radius: 20px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      color: var(--text-muted);
+    }
+
+    .badge-primary {
+      background: #eff6ff;
+      border-color: #bfdbfe;
+      color: #1d4ed8;
+    }
+
+    .badge-success {
+      background: #ecfdf5;
+      border-color: #a7f3d0;
+      color: #047857;
+    }
+
+    h1.paper-title {
+      font-size: 2.35rem;
+      font-weight: 800;
+      line-height: 1.25;
+      color: var(--primary-dark);
+      margin-bottom: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .author-block {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 1.5rem;
+      font-size: 0.95rem;
+      color: var(--text-muted);
+      margin-top: 1rem;
+    }
+
+    .author-name {
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    /* Abstract Card */
+    .abstract-box {
+      background: #f8fafc;
+      border-left: 4px solid var(--primary);
+      border-radius: 0 8px 8px 0;
+      padding: 1.5rem 1.75rem;
+      margin: 2.25rem 0 3rem 0;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+
+    .abstract-title {
+      font-size: 0.85rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--primary);
+      margin-bottom: 0.75rem;
+    }
+
+    .abstract-text {
+      font-size: 1.05rem;
+      line-height: 1.7;
+      color: #334155;
+      font-weight: 450;
+    }
+
+    /* Typography & Sections */
+    section {
+      margin-bottom: 3.5rem;
+    }
+
+    h2.section-heading {
+      font-size: 1.6rem;
+      font-weight: 750;
+      color: var(--primary-dark);
+      margin-bottom: 1.1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--surface-border);
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    h3.sub-heading {
+      font-size: 1.2rem;
+      font-weight: 680;
+      color: #1e293b;
+      margin: 1.6rem 0 0.75rem 0;
+    }
+
+    p {
+      margin-bottom: 1.15rem;
+      font-size: 1.02rem;
+      color: #334155;
+    }
+
+    ul, ol {
+      margin-bottom: 1.25rem;
+      padding-left: 1.4rem;
+      color: #334155;
+    }
+
+    li {
+      margin-bottom: 0.5rem;
+    }
+
+    strong {
+      color: var(--primary-dark);
+      font-weight: 650;
+    }
+
+    /* Callout Alerts */
+    .alert {
+      padding: 1rem 1.25rem;
+      border-radius: 6px;
+      margin: 1.5rem 0;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .alert-info {
+      background: #f0f9ff;
+      border-left: 4px solid #0284c7;
+      color: #075985;
+    }
+
+    .alert-warning {
+      background: var(--warning-bg);
+      border-left: 4px solid var(--warning-border);
+      color: var(--warning-text);
+    }
+
+    .alert-danger {
+      background: var(--danger-bg);
+      border-left: 4px solid var(--danger-border);
+      color: var(--danger-text);
+    }
+
+    .alert-success {
+      background: var(--success-bg);
+      border-left: 4px solid var(--success-border);
+      color: var(--success-text);
+    }
+
+    /* Tables */
+    .table-container {
+      overflow-x: auto;
+      margin: 1.75rem 0;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.92rem;
+      text-align: left;
+    }
+
+    th {
+      background: var(--surface);
+      color: var(--primary-dark);
+      font-weight: 700;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--surface-border);
+    }
+
+    td {
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid var(--surface-border);
+      color: #334155;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr:hover td {
+      background-color: #f8fafc;
+    }
+
+    .highlight-row {
+      background-color: #eff6ff !important;
+      font-weight: 600;
+      color: #1e3a8a;
+    }
+
+    /* Figures */
+    figure {
+      margin: 2.25rem 0;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #ffffff;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.03);
+    }
+
+    figure img {
+      width: 100%;
+      height: auto;
+      display: block;
+      background: #fafafa;
+    }
+
+    figcaption {
+      padding: 0.85rem 1.25rem;
+      background: var(--surface);
+      border-top: 1px solid var(--surface-border);
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    figcaption strong {
+      color: var(--primary-dark);
+    }
+
+    /* Metrics Grid */
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    .metric-card {
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1.15rem;
+      text-align: center;
+    }
+
+    .metric-value {
+      font-size: 1.85rem;
+      font-weight: 800;
+      color: var(--primary);
+      line-height: 1.1;
+      margin-bottom: 0.35rem;
+    }
+
+    .metric-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .metric-sub {
+      font-size: 0.78rem;
+      color: #059669;
+      font-weight: 500;
+      margin-top: 0.25rem;
+    }
+
+    /* Code Blocks */
+    pre {
+      background: var(--code-bg);
+      color: var(--code-text);
+      padding: 1.15rem 1.35rem;
+      border-radius: 8px;
+      overflow-x: auto;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.86rem;
+      line-height: 1.6;
+      margin: 1.25rem 0;
+    }
+
+    code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.88em;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 0.15rem 0.35rem;
+      border-radius: 4px;
+    }
+
+    pre code {
+      background: transparent;
+      color: inherit;
+      padding: 0;
+    }
+
+    /* Math formula highlight */
+    .math-block {
+      background: #f8fafc;
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 1rem 1.5rem;
+      font-family: "Cambria Math", "Times New Roman", serif;
+      font-size: 1.1rem;
+      text-align: center;
+      margin: 1.25rem 0;
+      color: #0f172a;
+    }
+
+    /* Footer */
+    footer {
+      border-top: 1px solid var(--surface-border);
+      background: var(--surface);
+      padding: 3rem 1.5rem;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    footer a {
+      color: var(--primary);
+      text-decoration: underline;
+      font-weight: 500;
+    }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      h1.paper-title {
+        font-size: 1.85rem;
+      }
+      .nav-links {
+        display: none;
+      }
+      .page-wrapper {
+        padding-top: 1.75rem;
+      }
+      .metric-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Header Navigation -->
+  <header>
+    <div class="nav-container">
+      <a href="#" class="brand-title">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e3a8a" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        FlyRank ML Research
+      </a>
+      <ul class="nav-links">
+        <li><a href="#abstract">Abstract</a></li>
+        <li><a href="#problem">Problem</a></li>
+        <li><a href="#data">Data</a></li>
+        <li><a href="#methodology">Methodology</a></li>
+        <li><a href="#results">Results</a></li>
+        <li><a href="#limitations">Limitations</a></li>
+        <li><a href="#recommendations">Playbook</a></li>
+        <li><a href="#reproducibility">Code</a></li>
+      </ul>
+      <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment" class="btn-github" target="_blank" rel="noopener">
+        <svg width="16" height="16" fill="currentColor" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub Repo
+      </a>
+    </div>
+  </header>
+
+  <div class="page-wrapper">
+
+    <!-- Paper Hero -->
+    <div class="paper-hero">
+      <div class="paper-badge-group">
+        <span class="badge badge-primary">Machine Learning Research Paper</span>
+        <span class="badge">Track Code: ML-11</span>
+        <span class="badge badge-success">Grouped Client-Holdout Validated</span>
+        <span class="badge">N = 30,000 URLs / 79M Impressions</span>
+      </div>
+      <h1 class="paper-title">Predicting Organic Search Traffic Decay: Decision-Support Machine Learning on 79M Query Impressions</h1>
+      <div class="author-block">
+        <div><span class="author-name">Youssef Mohamed</span> &bull; Applied ML Research Intern</div>
+        <div><strong>Dataset:</strong> FlyRank Enterprise Search Release (March 2026)</div>
+        <div><strong>Publication Date:</strong> March 2026</div>
+      </div>
+    </div>
+
+    <!-- Section 1: Title + Abstract -->
+    <section id="abstract">
+      <div class="abstract-box">
+        <div class="abstract-title">1. Abstract (5-Sentence Canonical Summary)</div>
+        <p class="abstract-text">
+          Can pre-period search console telemetry, content staleness, and ranking volatility accurately predict which enterprise organic search landing pages will experience traffic decay (&ge; 20% decline in organic clicks over a forward 90-day evaluation window) before traffic loss occurs? 
+          We analyzed 30,000 landing pages spanning 32 client domains derived from FlyRank's March 2026 enterprise search release representing 79 million query impressions, strictly isolating a 90-day pre-period observation window from a 90-day post-period evaluation horizon. 
+          To prevent domain-level memorization leakage present in standard random splits, we evaluated a regularized Random Forest classifier against a commercial heuristic baseline using an honest Grouped Client-Holdout split that evaluated performance solely on completely unseen brand domains. 
+          On held-out client domains, the Random Forest model achieved an ROC-AUC of 0.754 and a Precision@20 of 85.0% (a +35.0 percentage point lift and 1.7x boost over the heuristic rule's 50.0% precision, and a 2.17x lift over the 39.1% test base rate). 
+          This operational model powers a 5-tier content action playbook that prioritizes editorial resource allocation, directs high-leverage snippet versus deep body refreshes, and enforces mandatory human review on top-3 ranking assets while explicitly prohibiting unsupervised copy automation.
+        </p>
+      </div>
+
+      <!-- Headline Metric Highlights -->
+      <div class="metric-grid">
+        <div class="metric-card">
+          <div class="metric-value">85.0%</div>
+          <div class="metric-label">Precision@20</div>
+          <div class="metric-sub">+35.0% vs Rule Baseline</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">0.754</div>
+          <div class="metric-label">ROC-AUC</div>
+          <div class="metric-sub">Held-Out Client Domains</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">2.17&times;</div>
+          <div class="metric-label">Precision Lift</div>
+          <div class="metric-sub">Over 39.1% Test Base Rate</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">79M</div>
+          <div class="metric-label">Impressions Analyzed</div>
+          <div class="metric-sub">30,000 URLs / 32 Domains</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Introduction / Problem Statement -->
+    <section id="problem">
+      <h2 class="section-heading">2. Introduction & Problem Statement</h2>
+      <p>
+        Organic search traffic remains the single highest-ROI customer acquisition channel for enterprise web platforms. However, organic visibility is never static: content suffers from natural temporal obsolescence, changing user search intent, competitive content releases, and frequent search engine algorithmic re-rankings. In enterprise marketing, maintaining traffic on existing content (often termed <em>content maintenance</em> or <em>refresh engineering</em>) is substantially cheaper than producing net-new content.
+      </p>
+      <p>
+        Despite the immense economic stakes, existing enterprise content refresh workflows suffer from a fatal operational dilemma:
+      </p>
+      <ul>
+        <li><strong>The Waste of Heuristic Rules:</strong> Teams default to crude rules of thumb, such as <em>"refresh all articles older than 180 days."</em> When tested on enterprise search logs, this rule achieves only 50.0% precision in its top candidates. In practice, half of editorial effort is spent editing stable, evergreen pages that do not need attention, or thin pages with negligible search demand.</li>
+        <li><strong>The Penalty of Lagging Detection:</strong> Alternatively, teams react to Google Search Console alerts weeks or months after traffic has collapsed. By the time a landing page loses Page 1 placement, recovering its authority requires disproportionate backlink acquisition and structural overhauls.</li>
+      </ul>
+      <p>
+        <strong>The Decision This Supports:</strong> This research establishes a predictive machine learning triage system. By identifying pages at elevated risk of a &ge; 20% organic click decline 90 days in advance, editorial leaders can deploy constrained human labor (averaging 3 hours per page) to high-leverage assets before rank collapse occurs.
+      </p>
+    </section>
+
+    <!-- Section 3: Data -->
+    <section id="data">
+      <h2 class="section-heading">3. Data Source, Scale, and Public Safety</h2>
+      <p>
+        The empirical foundation for this study is derived from FlyRank's March 2026 Enterprise Search Telemetry Release.
+      </p>
+      <ul>
+        <li><strong>Telemetry Volume:</strong> 79,000,000 search query impressions aggregated across enterprise client properties.</li>
+        <li><strong>Analyzed Landing Pages:</strong> 30,000 unique URLs representing 32 distinct client domains.</li>
+        <li><strong>Observation Horizon:</strong>
+          <ul>
+            <li><strong>Pre-Period Window ($T_{-90} \to T_{0}$):</strong> Historical 90-day search console metrics (impressions, clicks, CTR, average rank position, engagement rate, scroll depth, session counts).</li>
+            <li><strong>Forward Evaluation Window ($T_{0} \to T_{+90}$):</strong> Forward 90-day trajectory utilized strictly to calculate the ground-truth decay label.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <div class="alert alert-info">
+        <strong>Data Hygiene & Exclusion Criteria:</strong> Pages with 0 impressions or 0 sessions across the pre-period were excluded to eliminate broken staging URLs or unindexed pages. To stabilize model training against severe power-law distributions, count signals (<code>impressions_90d</code>, <code>clicks_90d</code>, <code>sessions_90d</code>) were normalized using a natural log transform $\log(x + 1)$.
+      </div>
+
+      <div class="alert alert-success">
+        <strong>Public-Safe Anonymization Guarantee:</strong> In accordance with strict data privacy guidelines, zero client brand names, raw query strings, search queries, or proprietary URLs appear anywhere in this repository or research artifact. Organizations are masked as integer identifiers (<code>client_id</code>).
+      </div>
+    </section>
+
+    <!-- Section 4: Methodology -->
+    <section id="methodology">
+      <h2 class="section-heading">4. Methodology & Honest Validation Design</h2>
+      
+      <h3 class="sub-heading">4.1 Supervised Target Formulation</h3>
+      <p>
+        We formulate content decay as a supervised binary classification task. Let $\text{Clicks}_{T_{-90}\to T_{0}}$ denote the total organic clicks in the pre-period, and $\text{Clicks}_{T_{0}\to T_{+90}}$ denote clicks in the forward evaluation window. The ground truth binary label is defined as:
+      </p>
+      <div class="math-block">
+        $$\text{is\_declining\_label} = \begin{cases} 
+        1 & \text{if } \frac{\text{Clicks}_{T_{0}\to T_{+90}} - \text{Clicks}_{T_{-90}\to T_{0}}}{\text{Clicks}_{T_{-90}\to T_{0}}} \le -0.20 \\
+        0 & \text{otherwise}
+        \end{cases}$$
+      </div>
+      <p>
+        A threshold of $-20\%$ distinguishes organic volatility from genuine, structural traffic decay. Across the entire 30,000 inventory, 16,262 URLs (54.2%) met this decay definition. On the held-out test client domains, the natural base rate was 39.1%.
+      </p>
+
+      <h3 class="sub-heading">4.2 Feature Space (Strictly Pre-Decision)</h3>
+      <p>
+        Features were engineered strictly from pre-period signals to prevent any temporal data leakage:
+      </p>
+      <ul>
+        <li><strong>Staleness & Maturation:</strong> <code>days_since_last_update</code>, <code>content_age_days</code>.</li>
+        <li><strong>Search Console Telemetry:</strong> <code>log_impressions_90d</code>, <code>log_clicks_90d</code>, <code>ctr</code>, <code>avg_position</code>, <code>days_with_impressions</code>.</li>
+        <li><strong>User Engagement & Traffic Quality:</strong> <code>engagement_rate</code>, <code>scroll_rate</code>, <code>ai_traffic_pct</code>.</li>
+        <li><strong>Content & SERP Metadata:</strong> <code>word_count</code>, <code>char_count</code>, <code>cpc</code>, <code>competition</code>, and one-hot categorical vectors (<code>freshness_tier</code>, <code>position_tier</code>, <code>content_type</code>, <code>competition_level</code>, <code>main_intent</code>).</li>
+      </ul>
+
+      <h3 class="sub-heading">4.3 The Validation Audit: Why Random Splits Lie</h3>
+      <p>
+        In Week 6, we conducted a rigorous audit of the validation methodology. When applying standard random K-fold splits, the model achieved an unrealistic <strong>95.0% Precision@20</strong>. This illusion arose because individual client domains publish hundreds of related articles sharing identical domain authority, root backlink profiles, and CMS design. The classifier learned to memorize client identity rather than underlying search decay mechanics.
+      </p>
+      <p>
+        To provide an honest evaluation, we enforce a <strong>Grouped Client-Holdout Split</strong>:
+      </p>
+      <ul>
+        <li><strong>Training Set:</strong> 26 client domains (27,675 URLs).</li>
+        <li><strong>Held-Out Test Set:</strong> 6 completely unseen client domains (2,325 URLs), representing zero domain overlap.</li>
+      </ul>
+    </section>
+
+    <!-- Section 5: Results -->
+    <section id="results">
+      <h2 class="section-heading">5. Results: Model vs. Baseline on Held-Out Client Domains</h2>
+      <p>
+        All models and the commercial heuristic baseline were evaluated simultaneously on the exact same 2,325 held-out test landing pages across 6 unseen client domains.
+      </p>
+
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Model / Strategy</th>
+              <th>ROC-AUC</th>
+              <th>PR-AUC</th>
+              <th>P@10</th>
+              <th>P@20</th>
+              <th>P@50</th>
+              <th>P@100</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Week 4 Heuristic Rule</strong> (Stale &ge; 90d + Impr &ge; 500)</td>
+              <td>0.5017</td>
+              <td>0.3918</td>
+              <td>60.0%</td>
+              <td>50.0%</td>
+              <td>44.0%</td>
+              <td>39.0%</td>
+            </tr>
+            <tr>
+              <td><strong>Logistic Regression</strong> (L2 Regularized)</td>
+              <td>0.7128</td>
+              <td>0.5315</td>
+              <td>30.0%</td>
+              <td>35.0%</td>
+              <td>40.0%</td>
+              <td>44.0%</td>
+            </tr>
+            <tr>
+              <td><strong>Decision Tree</strong> (max_depth=3)</td>
+              <td>0.6980</td>
+              <td>0.5190</td>
+              <td>60.0%</td>
+              <td>60.0%</td>
+              <td>52.0%</td>
+              <td>48.0%</td>
+            </tr>
+            <tr class="highlight-row">
+              <td><strong>Random Forest</strong> (n=100, max_depth=8, min_leaf=20)</td>
+              <td>0.7541</td>
+              <td>0.6343</td>
+              <td>80.0%</td>
+              <td>85.0%</td>
+              <td>82.0%</td>
+              <td>78.0%</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <figure>
+        <img src="figures/model_vs_baseline_comparison.png" alt="Model vs Baseline Comparison on Held-Out Test Set" loading="lazy">
+        <figcaption>
+          <strong>Figure 1: Comparative Evaluation on Held-Out Client Domains.</strong> 
+          Left: Receiver Operating Characteristic (ROC) curves demonstrating the Random Forest model's strong discriminatory capacity (AUC = 0.754) versus the near-random heuristic baseline (AUC = 0.502). 
+          Right: Precision@K across the ranked triage queue, illustrating that Random Forest achieves 85.0% precision at K=20 (a 2.17&times; lift over the 39.1% test base rate).
+        </figcaption>
+      </figure>
+
+      <h3 class="sub-heading">5.1 What Signals Drive Decay Risk? (Feature Importance)</h3>
+      <p>
+        Analysis of Gini impurity reduction across the 100 decision trees reveals the dominant features predictive of decay:
+      </p>
+
+      <figure>
+        <img src="figures/feature_importance.png" alt="Random Forest Feature Importance" loading="lazy">
+        <figcaption>
+          <strong>Figure 2: Top 12 Predictive Features in Random Forest Classifier.</strong> 
+          Staleness metrics (<code>days_since_last_update</code>, <code>content_age_days</code>) combined with engagement quality (<code>engagement_rate</code>, <code>scroll_rate</code>) and ranking placement (<code>avg_position</code>) dominate predictive power over raw volume counts.
+        </figcaption>
+      </figure>
+
+      <h3 class="sub-heading">5.2 Error Analysis</h3>
+      <ul>
+        <li><strong>False Positives (Predicted Decay, Actually Stable):</strong> Evergreen reference assets with high <code>content_age_days</code> and zero recent updates that nonetheless maintain steady rankings due to irreplaceable domain authority.</li>
+        <li><strong>False Negatives (Missed Decay, Unexpected Collapse):</strong> High-volume commercial landing pages that experienced sudden position losses due to major Google SERP layout shifts (e.g. expansion of sponsored shopping carousels or AI Overviews).</li>
+      </ul>
+    </section>
+
+    <!-- Section 6: Limitations & Honest Framing -->
+    <section id="limitations">
+      <h2 class="section-heading">6. Limitations & Critical Honest Framing</h2>
+      <p>
+        In machine learning research, trust is earned by explicitly declaring what a model cannot do:
+      </p>
+      <div class="alert alert-warning">
+        <strong>1. Observational Association vs. True Causality:</strong> This model measures statistical associations in historical search console telemetry. A high predicted decay probability does NOT guarantee that updating a page will causally restore lost traffic if the ranking drop stems from fundamental search intent migration or domain-wide algorithmic penalties.
+      </div>
+      <div class="alert alert-warning">
+        <strong>2. Blindness to Real-Time SERP Layout Shifts:</strong> Google Search Console logs impressions and clicks, but does not capture external SERP changes such as Google AI Overviews, Knowledge Graph expansions, or competitor advertising.
+      </div>
+      <div class="alert alert-warning">
+        <strong>3. Concept Drift from Core Algorithm Updates:</strong> Major Google Search Core Algorithm Updates can instantaneously invalidate historical feature weightings. Models must undergo scheduled re-calibration and continuous drift monitoring.
+      </div>
+    </section>
+
+    <!-- Section 7: Ranked Recommendations -->
+    <section id="recommendations">
+      <h2 class="section-heading">7. Content Action Playbook: Operational Recommendations</h2>
+      <p>
+        A raw probability score $P(\text{decline}) \in [0, 1]$ is unhelpful to a content editor. To operationalize the model across all 30,000 inventory URLs, we built a prioritization engine and mapped predictions into an actionable 5-tier taxonomy.
+      </p>
+
+      <div class="math-block">
+        $$\text{Priority Score} = P(\text{decline}) \times \log_{10}(\text{impressions\_90d} + 1) \times \text{Position Multiplier}$$
+        <small style="display:block; font-size: 0.85rem; color: #64748b; margin-top: 4px;">
+          (Position Multiplier = 1.5 for Page 1 [Pos &le; 10], 1.2 for Striking Distance [11–20], 1.0 otherwise)
+        </small>
+      </div>
+
+      <figure>
+        <img src="figures/action_mix.png" alt="Distribution of Recommended Actions" loading="lazy">
+        <figcaption>
+          <strong>Figure 3: Operational Action Distribution Across 30,000 Landing Pages.</strong> 
+          13,258 pages (44.2%) require only automated monitoring, while 16,742 pages are allocated into high-leverage intervention buckets.
+        </figcaption>
+      </figure>
+
+      <h3 class="sub-heading">7.1 The 5-Tier Action Taxonomy</h3>
+      <ul>
+        <li><strong><code>monitor</code> (13,258 URLs, 44.2%):</strong> Low risk ($P \le 0.45$). Keep observing without manual intervention.</li>
+        <li><strong><code>refresh_and_review_ctr</code> (6,276 URLs, 20.9%):</strong> High impressions and Page 1/2 ranking, but CTR &lt; 2.5%. High-leverage snippet optimization (Title tag, meta description, schema markup). Estimated effort: <strong>1.5 hours</strong>.</li>
+        <li><strong><code>refresh</code> (5,720 URLs, 19.1%):</strong> Severe staleness (&ge; 90 days) with verified decay risk. Comprehensive factual review, stat refreshes, and broken link remediation. Estimated effort: <strong>3.0 hours</strong>.</li>
+        <li><strong><code>refresh_and_review_engagement</code> (4,687 URLs, 15.6%):</strong> Poor scroll rate (&lt; 40%) and low engagement. Layout redesign, UX clarification, and visual enhancements. Estimated effort: <strong>4.0 hours</strong>.</li>
+        <li><strong><code>expand_and_refresh</code> (59 URLs, 0.2%):</strong> Thin content (&lt; 500 words) on declining topics. Complete content expansion. Estimated effort: <strong>6.0 hours</strong>.</li>
+      </ul>
+
+      <figure>
+        <img src="figures/priority_by_position.png" alt="Priority Score vs Organic Position" loading="lazy">
+        <figcaption>
+          <strong>Figure 4: Priority Score vs. Average Rank Position.</strong> 
+          The prioritization formula concentrates top intervention urgency on Page 1 and Striking Distance assets where ranking decay carries the largest commercial traffic penalties.
+        </figcaption>
+      </figure>
+
+      <div class="alert alert-danger">
+        <strong>Mandatory Human-in-the-Loop Gate:</strong> 
+        There are <strong>449 landing pages</strong> ranking in positions 1–3 that show elevated decay probabilities. These assets require mandatory senior editorial sign-off prior to making any live modifications. Injudicious edits to top-3 ranking URLs risk immediate ranking catastrophe.
+      </div>
+
+      <div class="alert alert-danger">
+        <strong>Strict NO-GO Automation Guardrails:</strong>
+        <ol>
+          <li><strong>Never automate copy generation with unvetted LLMs:</strong> Programmatic AI overwriting without human fact-checking frequently degrades search ranking.</li>
+          <li><strong>Never automate URL deletions or mass 301 redirects:</strong> Deleting URLs without individual backlink audits permanently destroys hard-won domain equity.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- Section 8: Reproducibility -->
+    <section id="reproducibility">
+      <h2 class="section-heading">8. Reproducibility & Open Source Artifacts</h2>
+      <p>
+        In adherence to scientific open-source principles, all source code, pipeline scripts, data contracts, and validation tests are public and fully reproducible.
+      </p>
+      <ul>
+        <li><strong>GitHub Repository:</strong> <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment" target="_blank" rel="noopener">https://github.com/youssef-mm/FlyRank-ML-Assignment</a></li>
+        <li><strong>Primary Capstone Notebook:</strong> <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment/blob/main/work/notebooks/capstone.ipynb" target="_blank" rel="noopener">work/notebooks/capstone.ipynb</a></li>
+        <li><strong>Action Playbook Notebook:</strong> <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment/blob/main/work/notebooks/w07_action_playbook.ipynb" target="_blank" rel="noopener">work/notebooks/w07_action_playbook.ipynb</a></li>
+        <li><strong>Validation Audit Notebook:</strong> <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment/blob/main/work/notebooks/w06_validation_audit.ipynb" target="_blank" rel="noopener">work/notebooks/w06_validation_audit.ipynb</a></li>
+        <li><strong>Modeling Notebook:</strong> <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment/blob/main/work/notebooks/w05_model.ipynb" target="_blank" rel="noopener">work/notebooks/w05_model.ipynb</a></li>
+        <li><strong>Random Seeds:</strong> <code>np.random.seed(42)</code>, <code>random_state=42</code> throughout.</li>
+      </ul>
+      <p>
+        To execute the full computational pipeline top-to-bottom:
+      </p>
+      <pre><code># Clone repository
+git clone https://github.com/youssef-mm/FlyRank-ML-Assignment.git
+cd FlyRank-ML-Assignment
+
+# Install dependencies
+pip install scikit-learn pandas numpy matplotlib seaborn jupyter
+
+# Execute full capstone analysis top-to-bottom
+jupyter nbconvert --to notebook --execute work/notebooks/capstone.ipynb</code></pre>
+    </section>
+
+    <!-- Section 9: Acknowledgments & Data Credit -->
+    <section id="acknowledgments">
+      <h2 class="section-heading">9. Acknowledgments & Data Credit</h2>
+      <div class="alert alert-info">
+        <p style="margin-bottom: 0; font-size: 1.02rem;">
+          <strong>Built on the FlyRank ML Internship dataset:</strong> 
+          This empirical research was conducted utilizing the production search intelligence telemetry provided by the 
+          <a href="https://flyrank.ai" target="_blank" rel="noopener" style="font-weight: 700; color: #0369a1; text-decoration: underline;">FlyRank ML Internship</a>. 
+          We express our gratitude to the FlyRank engineering and research teams for curating and making this anonymized enterprise dataset accessible for academic and applied machine learning research.
+        </p>
+      </div>
+    </section>
+
+    <!-- Closing Portfolio Translation (ML-12) -->
+    <section id="portfolio-translation" style="margin-top: 3.5rem; padding-top: 2rem; border-top: 2px dashed var(--surface-border);">
+      <h2 class="section-heading">10. Portfolio & Career Translation (ML-12)</h2>
+      
+      <h3 class="sub-heading">A. 5-Minute Technical Demo Script</h3>
+      <p>
+        <em>Designed for engineering interviews, technical demos, and executive stakeholders:</em>
+      </p>
+      <ol>
+        <li><strong>Minute 1 (The Economic Problem):</strong> Enterprise marketing teams oversee 30,000+ URLs with constrained human writing capacity. Conventional rules (e.g. "update all 6-month-old posts") exhibit a 50% false positive rate, wasting hundreds of editorial hours.</li>
+        <li><strong>Minute 2 (The Dataset & Leakage Controls):</strong> Analyzing 79 million impressions across 32 clients from FlyRank's March 2026 release, we strictly separated historical observation telemetry from forward evaluation windows to prevent temporal target leakage.</li>
+        <li><strong>Minute 3 (The Validation Breakthrough):</strong> We revealed how standard random K-fold splits artificially inflate precision to 95% via domain memorization. Enforcing an honest Grouped Client-Holdout split on 6 unseen brand domains established realistic, trustworthy performance bounds.</li>
+        <li><strong>Minute 4 (The Results & Taxonomy):</strong> On unseen client domains, our regularized Random Forest model delivered 85% Precision@20 (+35 percentage points over the heuristic baseline). We translated probabilities into a 5-tier action taxonomy with explicit reason codes.</li>
+        <li><strong>Minute 5 (Governance & Production Controls):</strong> Implemented a senior editorial sign-off gate for 449 top-3 ranking URLs and instituted a strict NO-GO rule banning unvetted LLM copy deployment.</li>
+      </ol>
+
+      <h3 class="sub-heading">B. Social Post Cut</h3>
+      <div class="alert alert-info" style="font-size: 0.95rem;">
+        <p><strong>Stop refreshing SEO content based on "date published". We evaluated 79M impressions across 30,000 URLs to prove why.</strong></p>
+        <p>In enterprise SEO, the default rule is simple: <em>"If it’s 6 months old, refresh it."</em> But on production search console data, this heuristic achieved just 50% precision in its top candidates — literally a coin toss.</p>
+        <p>By training a regularized Random Forest evaluated strictly on an honest <strong>Grouped Client-Holdout Split</strong> (testing on completely unseen enterprise domains), we achieved:</p>
+        <p>
+          &bull; <strong>85% Precision@20</strong> (+35.0% lift over heuristic rule)<br>
+          &bull; <strong>0.754 ROC-AUC</strong> across held-out client domains<br>
+          &bull; <strong>5-Tier Operational Action Playbook</strong> with strict human-in-the-loop gates for Top-3 ranking assets.
+        </p>
+        <p>Deployed paper & open-source code: <a href="https://youssef-mm.github.io/FlyRank-ML-Assignment/" target="_blank" rel="noopener">https://youssef-mm.github.io/FlyRank-ML-Assignment/</a></p>
+        <p style="margin-bottom: 0;"><em>Built on the FlyRank ML Internship dataset (<a href="https://flyrank.ai" target="_blank" rel="noopener">https://flyrank.ai</a>).</em></p>
+      </div>
+
+      <h3 class="sub-heading">C. 3-Sentence Executive Pitch</h3>
+      <ol>
+        <li><strong>What I built:</strong> I designed, validated, and deployed an end-to-end machine learning decision-support pipeline that predicts organic search traffic decay and prioritizes content maintenance for enterprise editorial teams.</li>
+        <li><strong>On what data:</strong> Built on FlyRank’s March 2026 production dataset spanning 79 million search impressions and 30,000 landing pages across 32 enterprise domains.</li>
+        <li><strong>What it showed:</strong> By replacing naive random splits with an honest grouped client-holdout validation design, my Random Forest model achieved 85% Precision@20 (+35 percentage points over the heuristic baseline) while enforcing strict human-in-the-loop governance for top-ranking search assets.</li>
+      </ol>
+    </section>
+
+  </div>
+
+  <!-- Page Footer -->
+  <footer>
+    <div style="max-width: 900px; margin: 0 auto;">
+      <p style="margin-bottom: 0.5rem;">
+        <strong>Predicting Organic Search Traffic Decay: Decision-Support ML on 79M Query Impressions</strong>
+      </p>
+      <p style="margin-bottom: 0.75rem;">
+        Authored by <strong>Youssef Mohamed</strong> &bull; Applied Machine Learning Research &bull; March 2026
+      </p>
+      <p style="font-size: 0.82rem; color: #94a3b8;">
+        Built on the <a href="https://flyrank.ai" target="_blank" rel="noopener">FlyRank ML Internship</a> dataset &bull; 
+        <a href="https://github.com/youssef-mm/FlyRank-ML-Assignment" target="_blank" rel="noopener">GitHub Repository</a> &bull; 
+        Open Access Research Artifact
+      </p>
+    </div>
+  </footer>
+
+</body>
+</html>
